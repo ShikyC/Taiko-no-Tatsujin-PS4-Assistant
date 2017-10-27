@@ -1,7 +1,10 @@
 //#include <avr/pgmspace.h>
+//#include <Keyboard.h>
 
 #define BUTTON_PRESS_TIME 15
 #define ROLL_COUNT 1 // Don't be too greedy
+
+#define BUTTON_VOLTAGE 768
 
 //******************** Tips about the sheet file *******************
 // BPM value format: "B12345\n"
@@ -30,8 +33,7 @@ char* sheetFile = "B126.6666667\n"
                   "B126.6666667\n"
                   "211211"
                   "B190\n"
-                  "2000001020002010001020112020222210205555555555555555550040400000\0"
-                  ;
+                  "2000001020002010001020112020222210205555555555555555550040400000\0";
 
 float bpm;
 int sheetCursor;
@@ -50,10 +52,11 @@ void setup() {
   started = false;
 
   Serial.begin (9600);
+  //Keyboard.begin ();
 }
 
 void loop() {
-
+  Serial.write(analogRead(A4));
   currentTime = millis();
   if (analogRead(A4) >= 1023) {
     started = true;
@@ -80,45 +83,51 @@ void loop() {
       sheetCursor++;
       return;
     case '1': // small don
-      digitalWrite(A1, HIGH);
+//      Keyboard.write('c');
+      analogWrite(A1, BUTTON_VOLTAGE);
       delay (BUTTON_PRESS_TIME);
-      digitalWrite(A1, LOW);
+      analogWrite(A1, 0);
       sheetCursor++;
       delay (15000.0 / bpm - millis() + currentTime);
       return;
     case '2': // small kat
-      digitalWrite(A3, HIGH);
+//      Keyboard.write('v');
+      analogWrite(A3, BUTTON_VOLTAGE);
       Serial.print ("o");
       delay (BUTTON_PRESS_TIME);
-      digitalWrite(A3, LOW);
+      analogWrite(A3, 0);
       sheetCursor++;
       delay (15000.0 / bpm - millis() + currentTime);
       return;
     case '3': // big don
-      digitalWrite(A0, HIGH);
-      digitalWrite(A1, HIGH);
+//      Keyboard.write('c');
+//      Keyboard.write('x');
+      analogWrite(A0, BUTTON_VOLTAGE);
+      analogWrite(A1, BUTTON_VOLTAGE);
       Serial.print ("X");
       delay (BUTTON_PRESS_TIME);
-      digitalWrite(A0, LOW);
-      digitalWrite(A1, HIGH);
+      analogWrite(A0, 0);
+      analogWrite(A1, 0);
       sheetCursor++;
       delay (15000.0 / bpm - millis() + currentTime);
       return;
     case '4': // big kat
-      digitalWrite(A2, HIGH);
-      digitalWrite(A3, HIGH);
+//      Keyboard.write('v');
+//      Keyboard.write('z');
+      analogWrite(A2, BUTTON_VOLTAGE);
+      analogWrite(A3, BUTTON_VOLTAGE);
       Serial.print ("O");
       delay (BUTTON_PRESS_TIME);
-      digitalWrite(A2, LOW);
-      digitalWrite(A3, LOW);
+      analogWrite(A2, 0);
+      analogWrite(A3, 0);
       sheetCursor++;
       delay (15000.0 / bpm - millis() + currentTime);
       return;
     case '5': // ROLL_COUNT
       for (int i = 0; i < ROLL_COUNT; i++) {
-        digitalWrite(A1, HIGH);
+        analogWrite(A1, BUTTON_VOLTAGE);
         delay (BUTTON_PRESS_TIME);
-        digitalWrite(A1, LOW);
+        analogWrite(A1, 0);
         delay (BUTTON_PRESS_TIME);
       }
       sheetCursor++;
