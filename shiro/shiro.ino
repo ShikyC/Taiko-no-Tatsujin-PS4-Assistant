@@ -1,5 +1,4 @@
 //#include <avr/pgmspace.h>
-//#include <Keyboard.h>
 
 #define BUTTON_PRESS_TIME 15
 #define ROLL_COUNT 1 // Don't be too greedy
@@ -52,17 +51,16 @@ void setup() {
   started = false;
 
   Serial.begin (9600);
-  //Keyboard.begin ();
 }
 
 void loop() {
-  Serial.write(analogRead(A4));
   currentTime = millis();
-  if (analogRead(A4) >= 1023) {
+  if (analogRead(A4) >= 10) {
     started = true;
   }
   if (sheetCursor > strlen(sheetFile)) {
-    started = false; // Automatic reset after the song ends
+    started = false;
+    sheetCursor = 0;
   }
   if (!started) {
     return;
@@ -79,44 +77,35 @@ void loop() {
       sheetCursor = bpmCursor + 1;
       return;
     case '0': // Empty
-      delay (15000.0 / bpm - millis() + currentTime);
       sheetCursor++;
+      delay (15000.0 / bpm - millis() + currentTime);
       return;
-    case '1': // small don
-//      Keyboard.write('c');
+    case '1': // light don
       analogWrite(A1, BUTTON_VOLTAGE);
       delay (BUTTON_PRESS_TIME);
       analogWrite(A1, 0);
       sheetCursor++;
       delay (15000.0 / bpm - millis() + currentTime);
       return;
-    case '2': // small kat
-//      Keyboard.write('v');
+    case '2': // light kat
       analogWrite(A3, BUTTON_VOLTAGE);
-      Serial.print ("o");
       delay (BUTTON_PRESS_TIME);
       analogWrite(A3, 0);
       sheetCursor++;
       delay (15000.0 / bpm - millis() + currentTime);
       return;
-    case '3': // big don
-//      Keyboard.write('c');
-//      Keyboard.write('x');
+    case '3': // heavy don
       analogWrite(A0, BUTTON_VOLTAGE);
       analogWrite(A1, BUTTON_VOLTAGE);
-      Serial.print ("X");
       delay (BUTTON_PRESS_TIME);
       analogWrite(A0, 0);
       analogWrite(A1, 0);
       sheetCursor++;
       delay (15000.0 / bpm - millis() + currentTime);
       return;
-    case '4': // big kat
-//      Keyboard.write('v');
-//      Keyboard.write('z');
+    case '4': // heavy kat
       analogWrite(A2, BUTTON_VOLTAGE);
       analogWrite(A3, BUTTON_VOLTAGE);
-      Serial.print ("O");
       delay (BUTTON_PRESS_TIME);
       analogWrite(A2, 0);
       analogWrite(A3, 0);
@@ -135,3 +124,4 @@ void loop() {
       return;
   }
 }
+
