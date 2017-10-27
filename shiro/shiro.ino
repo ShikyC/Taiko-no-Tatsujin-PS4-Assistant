@@ -1,13 +1,12 @@
-#include <avr/pgmspace.h>
+//#include <avr/pgmspace.h>
 
-#define BUTTON_PRESS_TIME_IN_MILLISECONDS 20
+#define BUTTON_PRESS_TIME 20
 
 //******************** Tips about the sheet file *******************
 // BPM value format: "B12345\n"
 // BPM value can't have more than 15 digits including the decimal. 
 // For example, "B166.6667" is valid but "B166.66666666666667" is not.
-const char sheetFile[] PROGMEM = {
-  "B194\n"
+char* sheetFile = "B194\n"
   "300020202020200020201000"
   "100020202020111122221000"
   "102020102010201020000000"
@@ -126,7 +125,7 @@ const char sheetFile[] PROGMEM = {
   "1111111177777700"
   "0030000000000000"
   "\0"
-};
+;
 
 float bpm;
 int sheetCursor;
@@ -142,15 +141,17 @@ void setup() {
   pinMode(A4, INPUT); // A4 - start switch
   
   sheetCursor = 0;
-  started = false;
+  started = true;
   
   Serial.begin (9600);
+  delay(5000);
 }
 
 void loop() {
   
-  currentTime = micros();
-  if (digitalRead(A4) == HIGH) {
+  currentTime = millis();
+  if (analogRead(A4) >= 1023) {
+    Serial.print("Started\n");
     started = true;
   }
   if (sheetCursor > strlen(sheetFile)) {
@@ -159,7 +160,6 @@ void loop() {
   if (!started) {
     return;
   }
-  
   switch (sheetFile[sheetCursor]) {
   case 'B':
     bpmCursor = sheetCursor + 1;
@@ -172,47 +172,47 @@ void loop() {
     sheetCursor = bpmCursor + 1;
     return;
   case '0':
-    delayMicroseconds (15000000.0/bpm - micros() + currentTime);
+    delay (15000.0/bpm - millis() + currentTime);
     sheetCursor++;
     return;
   case '1':
-    Serial.print ('x');
+    Serial.print ("x");
     digitalWrite(A1, HIGH);
-    delayMicroseconds (BUTTON_PRESS_TIME_IN_MILLISECONDS - micros() + currentTime);
+    delay (BUTTON_PRESS_TIME - millis() + currentTime);
     digitalWrite(A1, LOW);
-    delayMicroseconds (15000000.0/bpm - BUTTON_PRESS_TIME_IN_MILLISECONDS);
+    delay (15000.0/bpm - BUTTON_PRESS_TIME);
     sheetCursor++;
     return;
   case '2':
-    Serial.print ('X');
-    digitalWrite(A0, HIGH);
-    digitalWrite(A1, HIGH);
-    delayMicroseconds (BUTTON_PRESS_TIME_IN_MILLISECONDS - micros() + currentTime);
-    digitalWrite(A0, LOW);
-    digitalWrite(A1, LOW);
-    delayMicroseconds (15000000.0/bpm - BUTTON_PRESS_TIME_IN_MILLISECONDS);
+    Serial.print ("o");
+    digitalWrite(A3, HIGH);
+    delay (BUTTON_PRESS_TIME - millis() + currentTime);
+    digitalWrite(A3, LOW);
+    delay (15000.0/bpm - BUTTON_PRESS_TIME);
     sheetCursor++;
     return;
   case '3':
-    Serial.print ('o');
-    digitalWrite(A3, HIGH);
-    delayMicroseconds (BUTTON_PRESS_TIME_IN_MILLISECONDS - micros() + currentTime);
-    digitalWrite(A3, LOW);
-    delayMicroseconds (15000000.0/bpm - BUTTON_PRESS_TIME_IN_MILLISECONDS);
+    Serial.print ("X");
+    digitalWrite(A0, HIGH);
+    digitalWrite(A1, HIGH);
+    delay (BUTTON_PRESS_TIME - millis() + currentTime);
+    digitalWrite(A0, LOW);
+    digitalWrite(A1, HIGH);
+    delay (15000.0/bpm - BUTTON_PRESS_TIME);
     sheetCursor++;
     return;
   case '4':
-    Serial.print ('O');
+    Serial.print ("O");
     digitalWrite(A2, HIGH);
     digitalWrite(A3, HIGH);
-    delayMicroseconds (BUTTON_PRESS_TIME_IN_MILLISECONDS - micros() + currentTime);
+    delay (BUTTON_PRESS_TIME - millis() + currentTime);
     digitalWrite(A2, LOW);
     digitalWrite(A3, LOW);
-    delayMicroseconds (15000000.0/bpm - BUTTON_PRESS_TIME_IN_MILLISECONDS);
+    delay (15000.0/bpm - BUTTON_PRESS_TIME);
     sheetCursor++;
     return;
   default:
-    delayMicroseconds (15000000.0/bpm);
+    delay (15000.0/bpm - millis() + currentTime);
     sheetCursor++;
     return;
   }
