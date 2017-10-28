@@ -1,9 +1,10 @@
 //#include <avr/pgmspace.h>
 
-#define BUTTON_PRESS_TIME 15
+#define BUTTON_PRESS_TIME 20
 #define ROLL_COUNT 1 // Don't be too greedy
 
-#define BUTTON_VOLTAGE 768
+#define BUTTON_HIGH_VOLTAGE 614
+#define BUTTON_LOW_VOLTAGE 0
 
 //******************** Tips about the sheet file *******************
 // BPM value format: "B12345\n"
@@ -46,6 +47,15 @@ void setup() {
   pinMode(A2, OUTPUT); // A2 - left kat
   pinMode(A3, OUTPUT); // A3 - right kat
   pinMode(A4, INPUT); // A4 - start switch
+  
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  analogWrite(A0, BUTTON_HIGH_VOLTAGE);
+  analogWrite(A1, BUTTON_HIGH_VOLTAGE);
+  analogWrite(A2, BUTTON_HIGH_VOLTAGE);
+  analogWrite(A3, BUTTON_HIGH_VOLTAGE);
+
+  digitalWrite(LED_BUILTIN, LOW);
 
   sheetCursor = 0;
   started = false;
@@ -81,42 +91,52 @@ void loop() {
       delay (15000.0 / bpm - millis() + currentTime);
       return;
     case '1': // light don
-      analogWrite(A1, BUTTON_VOLTAGE);
+      analogWrite(A1, BUTTON_LOW_VOLTAGE);
+      digitalWrite(LED_BUILTIN, HIGH);
       delay (BUTTON_PRESS_TIME);
-      analogWrite(A1, 0);
+      analogWrite(A1, BUTTON_HIGH_VOLTAGE);
+      digitalWrite(LED_BUILTIN, LOW);
       sheetCursor++;
       delay (15000.0 / bpm - millis() + currentTime);
       return;
     case '2': // light kat
-      analogWrite(A3, BUTTON_VOLTAGE);
+      analogWrite(A3, BUTTON_LOW_VOLTAGE);
+      digitalWrite(LED_BUILTIN, HIGH);
       delay (BUTTON_PRESS_TIME);
-      analogWrite(A3, 0);
+      analogWrite(A3, BUTTON_HIGH_VOLTAGE);
+      digitalWrite(LED_BUILTIN, LOW);
       sheetCursor++;
       delay (15000.0 / bpm - millis() + currentTime);
       return;
     case '3': // heavy don
-      analogWrite(A0, BUTTON_VOLTAGE);
-      analogWrite(A1, BUTTON_VOLTAGE);
+      analogWrite(A0, BUTTON_LOW_VOLTAGE);
+      analogWrite(A1, BUTTON_LOW_VOLTAGE);
+      digitalWrite(LED_BUILTIN, HIGH);
       delay (BUTTON_PRESS_TIME);
       analogWrite(A0, 0);
       analogWrite(A1, 0);
+      digitalWrite(LED_BUILTIN, LOW);
       sheetCursor++;
       delay (15000.0 / bpm - millis() + currentTime);
       return;
     case '4': // heavy kat
-      analogWrite(A2, BUTTON_VOLTAGE);
-      analogWrite(A3, BUTTON_VOLTAGE);
+      analogWrite(A2, BUTTON_LOW_VOLTAGE);
+      analogWrite(A3, BUTTON_LOW_VOLTAGE);
+      digitalWrite(LED_BUILTIN, HIGH);
       delay (BUTTON_PRESS_TIME);
-      analogWrite(A2, 0);
-      analogWrite(A3, 0);
+      analogWrite(A2, BUTTON_HIGH_VOLTAGE);
+      analogWrite(A3, BUTTON_HIGH_VOLTAGE);
+      digitalWrite(LED_BUILTIN, LOW);
       sheetCursor++;
       delay (15000.0 / bpm - millis() + currentTime);
       return;
     case '5': // ROLL_COUNT
       for (int i = 0; i < ROLL_COUNT; i++) {
-        analogWrite(A1, BUTTON_VOLTAGE);
+        analogWrite(A1, BUTTON_LOW_VOLTAGE);
+        digitalWrite(LED_BUILTIN, HIGH);
         delay (BUTTON_PRESS_TIME);
-        analogWrite(A1, 0);
+        analogWrite(A1, BUTTON_HIGH_VOLTAGE);
+        digitalWrite(LED_BUILTIN, LOW);
         delay (BUTTON_PRESS_TIME);
       }
       sheetCursor++;
