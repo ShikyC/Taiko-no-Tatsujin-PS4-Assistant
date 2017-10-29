@@ -1,45 +1,47 @@
 //#include <avr/pgmspace.h>
 
-#define BUTTON_PRESS_TIME 20
+#define BUTTON_PRESS_TIME 35
 #define ROLL_COUNT 1 // Don't be too greedy
 
-#define BUTTON_HIGH_VOLTAGE 614
-#define BUTTON_LOW_VOLTAGE 0
-
 //******************** Tips about the sheet file *******************
-// BPM value format: "B12345\n"
-// BPM value can't have more than 15 digits including the decimal.
+// BPM value format: "BXXXXXXXX\n"
+// XXXXXXXX value can't have more than 15 digits including the decimal.
 // For example, "B166.6667" is valid but "B166.66666666666667" is not.
-// This is the sheet of 「前前前世」 (Not verified; might have mistakes)
-char* sheetFile = "B126.6666667\n"
-                  "404040404040"
-                  "B190\n"
-                  "1000100010102000100010001020100010001000101020001000100020102020"
-                  "1000100010102000100010002010200011102010200010005555555500000000"
-                  "1000201010002010001020001010200010002010100020100010200010102000"
-                  "1010202210102000101020112010200010002000101020100010200011102000"
-                  "1000201010002010001020101010200010002010100020100010200011102000"
-                  "1010202210102010101020221010222010002000101020100010200011102000"
-                  "1010202210102022101020221010222010002000100010200020101020112000"
-                  "1110201110201110201110201111200055555555550020100010201000112000"
-                  "1110201110201110201110201111200055555555550020100010201110102000"
-                  "3000001020000010001000102000000010000010200020000010001020000000"
-                  "10000010200000100010001020112000"
-                  "1010201110201010201120201110200010102011102010200011111110000000"
-                  "1110111011102011102011200020112011102022101020100010201110102010"
-                  "0010202210102220001020112010200011102011202011200011102000102220"
-                  "1110111011102011102011200020112011112022102011200010201110201120"
-                  "00102022102011200022102010221120001020001010201000102000"
-                  "B126.6666667\n"
-                  "211211"
-                  "B190\n"
-                  "2000001020002010001020112020222210205555555555555555550040400000\0";
+// This is the sheet of 「紅」
+char* sheetFile = "B156.33\n"
+                  "x x x x xxx xxxxx o o o o  o  o x x xxxxx x xxxxx o o o o  o  xx"
+                  "x o xxo x ox xo x o xxo x ox xo x o xxo x ox xo x o xxooooxxx xx"
+                  "x o x o xxo xxo x o x o xxo xxo x o x o xxo xxo x o xxx o xxx x "
+                  "x o xxo x ox xo x o xxo x ox xo x xxx x o ooo o x o xxo x ox xo "
+                  "x o xxo x ox xo x o xxo x ox xo x xxx x o ooo o ooxxooxxooxxx   "
+                  "x o xxo x o xxo x o xxo x ox xo x xxx x o ooo o X  X  O O   xxx "
+                  "x o xxo x o xxo x o xxo x   o o o x x x o xxxxx "
+                  "x x x x xxx xxxxx o o o o  o  o x xxxxx x xxxxx x o o o o  o    "
+                  "x o xxo x ox xo x o xxo x ox xo x xxx x o ooo o x o xxo x ox xo "
+                  "x o xxo x ox xo x o xxo x ox xo x xxx x o ooo o ooxxooxxooxxx   "
+                  "x o xxo x o xxo x o xxo x ox xo x xxx x o ooo o X  X  O O   xxx "
+                  "x o xxo x o xxo x o xxo x   o o o xxx x o xxx   "
+                  "ooxxooxxooxxxxo xxooxxooxxooxxx ooxxooxxooxxxxo xxooxxooxxooxxx "
+                  "ooxxooxxooxxxxo xxooxxooxxooxxx ooxxooxxooxxxxooo   o o x   xxx "
+                  "xxxoooxxxoooxxxxx  xo xxx o x   "
+                  "x xxx xxo  o  x xxx   x x  o  o x   xxx x  x  o x o xxooo xxo oo"
+                  "x     x o  o  oox     xxoox ooxxxxooxxooxxxxooxxooxxxxooo x x x "
+                  "x xxx xxx x x x x o   o x x x x xxx xxx x x x x x o   o x x o o "
+                  "xxx xxx x x x x x o   o x x x x xxooxxooxxooxxooo  x  x o xxxxx "
+                  "x o xxo x ox xo x o xxo xxoox o xxo x o xxo x o xxooxxooxxoox o "
+                  "x xxo xxo xxo o x xxo xxooxxo o xxxxx x xxxxx x ooxxooxxooxxx   "
+                  "x o xxo x ox xo x o xxo xxxxx o xxoox o xxoox o x xxxxo x xxo o "
+                  "x xxo xxo xxo o x xxo xxooxxo o x xxx x x xxx   "
+                  "x x x x xxx xxx o x x x xxx xxx o xxx x o o xxx o xxx x o x xxx "
+                  "xxxoooxxxoooxxx xxxoooxxxoooxxo xxxoooxxxoooxxx O"
+                  "\0";
 
 float bpm;
 int sheetCursor;
 int bpmCursor;
 bool started;
-float currentTime;
+float sheetTime;
+unsigned long startTime;
 
 void setup() {
   pinMode(A0, OUTPUT); // A0 - left don
@@ -50,27 +52,24 @@ void setup() {
   
   pinMode(LED_BUILTIN, OUTPUT);
 
-  analogWrite(A0, BUTTON_HIGH_VOLTAGE);
-  analogWrite(A1, BUTTON_HIGH_VOLTAGE);
-  analogWrite(A2, BUTTON_HIGH_VOLTAGE);
-  analogWrite(A3, BUTTON_HIGH_VOLTAGE);
+  digitalWrite(A0, HIGH);
+  digitalWrite(A1, HIGH);
+  digitalWrite(A2, HIGH);
+  digitalWrite(A3, HIGH);
 
   digitalWrite(LED_BUILTIN, LOW);
 
   sheetCursor = 0;
+  sheetTime = 0;
   started = false;
 
   Serial.begin (9600);
 }
 
 void loop() {
-  currentTime = millis();
-  if (analogRead(A4) >= 10) {
+  if (analogRead(A4) >= 10 && !started) {
     started = true;
-  }
-  if (sheetCursor > strlen(sheetFile)) {
-    started = false;
-    sheetCursor = 0;
+    startTime = micros();
   }
   if (!started) {
     return;
@@ -86,62 +85,89 @@ void loop() {
       bpm = atof(bpmText);
       sheetCursor = bpmCursor + 1;
       return;
-    case '0': // Empty
+
+    //Empty
+    case ' ': case '0':
+      sheetTime += 1.5e7 / bpm;
       sheetCursor++;
-      delay (15000.0 / bpm - millis() + currentTime);
+      longMicroDelay (sheetTime - micros() + startTime);
       return;
-    case '1': // light don
-      analogWrite(A1, BUTTON_LOW_VOLTAGE);
+      
+    // light don
+    case 'x': case '1':
+      digitalWrite(A1, LOW);
       digitalWrite(LED_BUILTIN, HIGH);
       delay (BUTTON_PRESS_TIME);
-      analogWrite(A1, BUTTON_HIGH_VOLTAGE);
+      digitalWrite(A1, HIGH);
       digitalWrite(LED_BUILTIN, LOW);
+      sheetTime += 1.5e7 / bpm;
       sheetCursor++;
-      delay (15000.0 / bpm - millis() + currentTime);
+      longMicroDelay (sheetTime - micros() + startTime);
       return;
-    case '2': // light kat
-      analogWrite(A3, BUTTON_LOW_VOLTAGE);
+
+    // light kat
+    case 'o': case '2':
+      digitalWrite(A3, LOW);
       digitalWrite(LED_BUILTIN, HIGH);
       delay (BUTTON_PRESS_TIME);
-      analogWrite(A3, BUTTON_HIGH_VOLTAGE);
+      digitalWrite(A3, HIGH);
       digitalWrite(LED_BUILTIN, LOW);
+      sheetTime += 1.5e7 / bpm;
       sheetCursor++;
-      delay (15000.0 / bpm - millis() + currentTime);
+      longMicroDelay (sheetTime - micros() + startTime);
       return;
-    case '3': // heavy don
-      analogWrite(A0, BUTTON_LOW_VOLTAGE);
-      analogWrite(A1, BUTTON_LOW_VOLTAGE);
+
+    // heavy don
+    case 'X': case '3':
+      digitalWrite(A0, LOW);
+      digitalWrite(A1, LOW);
       digitalWrite(LED_BUILTIN, HIGH);
       delay (BUTTON_PRESS_TIME);
-      analogWrite(A0, 0);
-      analogWrite(A1, 0);
+      digitalWrite(A0, HIGH);
+      digitalWrite(A1, HIGH);
       digitalWrite(LED_BUILTIN, LOW);
+      sheetTime += 1.5e7 / bpm;
       sheetCursor++;
-      delay (15000.0 / bpm - millis() + currentTime);
+      longMicroDelay (sheetTime - micros() + startTime);
       return;
-    case '4': // heavy kat
-      analogWrite(A2, BUTTON_LOW_VOLTAGE);
-      analogWrite(A3, BUTTON_LOW_VOLTAGE);
+
+    // heavy kat
+    case 'O': case '4':
+      digitalWrite(A2, LOW);
+      digitalWrite(A3, LOW);
       digitalWrite(LED_BUILTIN, HIGH);
       delay (BUTTON_PRESS_TIME);
-      analogWrite(A2, BUTTON_HIGH_VOLTAGE);
-      analogWrite(A3, BUTTON_HIGH_VOLTAGE);
+      digitalWrite(A2, HIGH);
+      digitalWrite(A3, HIGH);
       digitalWrite(LED_BUILTIN, LOW);
+      sheetTime += 1.5e7 / bpm;
       sheetCursor++;
-      delay (15000.0 / bpm - millis() + currentTime);
+      longMicroDelay (sheetTime - micros() + startTime);
       return;
-    case '5': // ROLL_COUNT
-      for (int i = 0; i < ROLL_COUNT; i++) {
-        analogWrite(A1, BUTTON_LOW_VOLTAGE);
-        digitalWrite(LED_BUILTIN, HIGH);
-        delay (BUTTON_PRESS_TIME);
-        analogWrite(A1, BUTTON_HIGH_VOLTAGE);
-        digitalWrite(LED_BUILTIN, LOW);
-        delay (BUTTON_PRESS_TIME);
-      }
+
+    // Roll
+    case 'r': case 'R': case '5':
+//      for (int i = 0; i < ROLL_COUNT; i++) {
+//        digitalWrite(A1, LOW);
+//        digitalWrite(LED_BUILTIN, HIGH);
+//        delay (BUTTON_PRESS_TIME);
+//        digitalWrite(A1, HIGH);
+//        digitalWrite(LED_BUILTIN, LOW);
+//        delay (BUTTON_PRESS_TIME);
+//      }
+      sheetTime += 1.5e7 / bpm;
       sheetCursor++;
-      delay (15000.0 / bpm - millis() + currentTime);
+      longMicroDelay (sheetTime - micros() + startTime);
       return;
+  }
+  
+  if (sheetCursor > strlen(sheetFile)) {
+    started = false;
+    sheetCursor = 0;
   }
 }
 
+void longMicroDelay (float microTime) {
+  delay (microTime / 1000);
+  delayMicroseconds (microTime - floor(microTime / 1000) * 1000);
+}
